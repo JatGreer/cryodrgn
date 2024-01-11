@@ -186,7 +186,8 @@ def main(args) -> None:
     print(
         f"Selected {len(selected_indices)} particles from original list of "
         f"{len(all_indices)} "
-        f"particles numbered [{min(all_indices)}, ... , {max(all_indices)}]:\n{select_str}"
+        f"particles numbered [{min(all_indices)}, ... , {max(all_indices)}]:"
+        f"\n{select_str}"
     )
 
     save_option = input("Do you want to save the selection? (yes/no): ").strip().lower()
@@ -403,5 +404,5 @@ class SelectFromScatter:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    args = add_args(parser).parse_args()
-    main(args)
+    add_args(parser)
+    main(parser.parse_args())

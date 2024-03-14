@@ -53,7 +53,7 @@ def _get_commands(cmd_dir: str, doc_str: str = "") -> None:
                     epilog=epilog_txt,
                     formatter_class=argparse.RawTextHelpFormatter,
                 )
-                module.add_args(this_parser)
+                this_parser = module.add_args(this_parser)
                 this_parser.set_defaults(func=module.main)
 
     args = parser.parse_args()

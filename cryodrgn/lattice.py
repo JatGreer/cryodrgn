@@ -1,4 +1,4 @@
-"""Lattice object"""
+"""Two-dimensional lattice objects used to represent particle images."""
 
 import numpy as np
 import torch
@@ -6,14 +6,15 @@ import torch.nn.functional as F
 from torch import Tensor
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class Lattice:
     def __init__(
         self, D: int, extent: float = 0.5, ignore_DC: bool = True, device=None
     ):
-        assert D % 2 == 1, "Lattice size must be odd"
+        if D % 2 != 1:
+            raise ValueError(f"Lattice size {D=} is not odd!")
+
+        self.logger = logging.getLogger(__name__)
         x0, x1 = np.meshgrid(
             np.linspace(-extent, extent, D, endpoint=True),
             np.linspace(-extent, extent, D, endpoint=True),
@@ -65,7 +66,8 @@ class Lattice:
         assert (
             2 * L + 1 <= self.D
         ), "Mask with size {} too large for lattice with size {}".format(L, self.D)
-        logger.info("Using square lattice of size {}x{}".format(2 * L + 1, 2 * L + 1))
+
+        self.logger.info(f"Using square lattice of size {2 * L + 1}x{2 * L + 1}")
         b, e = self.D2 - L, self.D2 + L
         c1 = self.coords.view(self.D, self.D, 3)[b, b]
         c2 = self.coords.view(self.D, self.D, 3)[e, e]
@@ -85,8 +87,8 @@ class Lattice:
             return self.circle_mask[R]
         assert (
             2 * R + 1 <= self.D
-        ), "Mask with radius {} too large for lattice with size {}".format(R, self.D)
-        logger.debug("Using circular lattice with radius {}".format(R))
+        ), f"Mask with radius {R} too large for lattice with size {self.D}"
+        self.logger.debug(f"Using circular lattice with radius {R}")
 
         r = R / (self.D // 2) * self.extent
         mask = self.coords.pow(2).sum(-1) <= r**2
@@ -94,6 +96,7 @@ class Lattice:
             assert self.coords[self.D**2 // 2].sum() == 0.0
             mask[self.D**2 // 2] = 0
         self.circle_mask[R] = mask
+
         return mask
 
     def rotate(self, images: Tensor, theta: Tensor) -> Tensor:
@@ -138,7 +141,7 @@ class Lattice:
             [img[..., 0] * c - img[..., 1] * s, img[..., 0] * s + img[..., 1] * c], -1
         )
 
-    def translate_ht(self, img, t, mask=None):
+    def translate_ht(self, img, t, mask=None, freqs2d=None):
         """
         Translate an image by phase shifting its Hartley transform
 
@@ -153,7 +156,8 @@ class Lattice:
         img must be 1D unraveled image, symmetric around DC component
         """
         # H'(k) = cos(2*pi*k*t0)H(k) + sin(2*pi*k*t0)H(-k)
-        coords = self.freqs2d if mask is None else self.freqs2d[mask]
+        freqs = freqs2d if freqs2d is not None else self.freqs2d
+        coords = freqs if mask is None else freqs[mask]
         img = img.unsqueeze(1)  # Bx1xN
         t = t.unsqueeze(-1)  # BxTx2x1 to be able to do bmm
         tfilt = coords @ t * 2 * np.pi  # BxTxNx1

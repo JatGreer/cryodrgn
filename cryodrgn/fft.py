@@ -1,36 +1,35 @@
-import logging
+"""Utilities used for Fast Fourier Transform."""
 import numpy as np
 import torch
-from torch.fft import fftshift, ifftshift, fft2, fftn, ifftn
-
-
-logger = logging.getLogger(__name__)
 
 
 def normalize(img, mean=0, std=None, std_n=None):
     if std is None:
-        # Since std is a memory consuming process, use the first std_n samples for std determination
+        # Since std is a memory consuming process,
+        # use the first `std_n` samples for std determination
         std = torch.std(img[:std_n, ...])
 
-    logger.info(f"Normalized by {mean} +/- {std}")
     return (img - mean) / std
 
 
 def fft2_center(img):
-    return fftshift(fft2(fftshift(img, dim=(-1, -2))), dim=(-1, -2))
+    return torch.fft.fftshift(
+        torch.fft.fft2(torch.fft.fftshift(img, dim=(-1, -2))), dim=(-1, -2)
+    )
 
 
 def fftn_center(img):
-    return fftshift(fftn(fftshift(img)))
+    return torch.fft.fftshift(torch.fft.fftn(torch.fft.fftshift(img)))
 
 
-def ifftn_center(img):
+def ifftn_center(img: torch.Tensor):
     if isinstance(img, np.ndarray):
         # Note: We can't just typecast a complex ndarray using torch.Tensor(array) !
         img = torch.complex(torch.Tensor(img.real), torch.Tensor(img.imag))
-    x = ifftshift(img)
-    y = ifftn(x)
-    z = ifftshift(y)
+    x = torch.fft.ifftshift(img)
+    y = torch.fft.ifftn(x)
+    z = torch.fft.ifftshift(y)
+
     return z
 
 
@@ -39,22 +38,23 @@ def ht2_center(img):
     return _img.real - _img.imag
 
 
-def htn_center(img):
-    _img = fftshift(fftn(fftshift(img)))
+def htn_center(img: torch.Tensor):
+    _img = torch.fft.fftshift(torch.fft.fftn(torch.fft.fftshift(img)))
     return _img.real - _img.imag
 
 
-def iht2_center(img):
+def iht2_center(img: torch.Tensor):
     img = fft2_center(img)
     img /= img.shape[-1] * img.shape[-2]
     return img.real - img.imag
 
 
-def ihtn_center(img):
-    img = fftshift(img)
-    img = fftn(img)
-    img = fftshift(img)
+def ihtn_center(img: torch.Tensor):
+    img = torch.fft.fftshift(img)
+    img = torch.fft.fftn(img)
+    img = torch.fft.fftshift(img)
     img /= torch.prod(torch.tensor(img.shape, device=img.device))
+
     return img.real - img.imag
 
 

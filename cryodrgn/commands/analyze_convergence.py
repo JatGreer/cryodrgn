@@ -3,9 +3,13 @@ Visualize convergence and training dynamics
 
 (BETA -- contributed by Barrett Powell bmp@mit.edu)
 
-Compatible with v3.0.0 and up.
-"""
+Example usages
+--------------
+$ python analyze_convergence.py [workdir] [epoch],
 
+Compatible with v3.0.0 and up.
+
+"""
 import argparse
 import itertools
 import multiprocessing
@@ -27,7 +31,7 @@ from scipy.spatial import distance_matrix
 from cryodrgn import analysis, fft, utils
 from cryodrgn.source import ImageSource
 from cryodrgn.mrc import MRCFile
-import cryodrgn.trainers.config
+import cryodrgn.config
 
 try:
     from cuml.manifold.umap import UMAP as cuUMAP  # type: ignore
@@ -1101,7 +1105,7 @@ def main(args):
 
     # Get total number of particles, latent space dimensionality, input image size
     n_particles_total, n_dim = utils.load_pkl(f"{workdir}/z.{E}.pkl").shape
-    cfg = cryodrgn.trainers.config.load(config)
+    cfg = cryodrgn.config.load(config)
     img_size = cfg["lattice_args"]["D"] - 1
 
     # Commonly used variables
@@ -1244,10 +1248,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        epilog="Example usage: $ python analyze_convergence.py [workdir] [epoch]",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    add_args(parser)
-    main(parser.parse_args())
+    parser = argparse.ArgumentParser(description=__doc__)
+    main(add_args(parser).parse_args())

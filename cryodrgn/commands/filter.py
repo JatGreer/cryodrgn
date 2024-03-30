@@ -32,7 +32,7 @@ from cryodrgn import utils
 logger = logging.getLogger(__name__)
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "outdir", type=os.path.abspath, help="experiment output directory"
     )
@@ -400,9 +400,3 @@ class SelectFromScatter:
             self.handl_id = self.fig.canvas.mpl_connect(
                 "motion_notify_event", self.hover_points
             )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    add_args(parser)
-    main(parser.parse_args())

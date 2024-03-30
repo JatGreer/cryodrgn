@@ -47,6 +47,7 @@ def window_mask(D, in_rad: float, out_rad: float):
     x0, x1 = torch.meshgrid(
         torch.linspace(-1, 1, D + 1, dtype=torch.float32)[:-1],
         torch.linspace(-1, 1, D + 1, dtype=torch.float32)[:-1],
+        indexing="ij",
     )
     r = (x0**2 + x1**2) ** 0.5
     mask = torch.minimum(
@@ -217,7 +218,7 @@ def xrot(tilt_deg):
 @memoized
 def _zero_sphere_helper(D: int) -> Tuple[np.ndarray, np.ndarray]:
     xx = np.linspace(-1, 1, D, endpoint=True if D % 2 == 1 else False)
-    z, y, x = np.meshgrid(xx, xx, xx)
+    z, y, x = np.meshgrid(xx, xx, xx, indexing="ij")
     coords = np.stack((x, y, z), -1)
     r = np.sum(coords**2, axis=-1) ** 0.5
     retval = np.where(r > 1)
